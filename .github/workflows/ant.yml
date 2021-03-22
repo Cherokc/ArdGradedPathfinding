@@ -20,10 +20,10 @@ jobs:
       with:
         java-version: 1.8
     - name: Build with Ant
-      run: ant -noinput -buildfile build.xml jars
+      run: ant -noinput -buildfile build.xml update_clean_jars
       
     - name: Upload a Build Artifact
       uses: actions/upload-artifact@v2.1.4
       with:
         name: build
-        path: /home/runner/work/ArdClient/ArdClient/build/
+        path: /home/runner/work/ArdClient/ArdClient/update/
