@@ -1,3 +1,4 @@
+[![Java CI](https://github.com/Cediner/ArdClient/actions/workflows/ant.yml/badge.svg?branch=Unstable)](https://github.com/Cediner/ArdClient/actions/workflows/ant.yml)
 This is unstable version.
 
 Public community client start...
