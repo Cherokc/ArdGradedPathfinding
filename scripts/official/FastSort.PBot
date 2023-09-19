@@ -14,22 +14,6 @@ javaListToArray = (javalist) => {
 		ret.push(javalist.get(i));
 	return ret;
 };
-function stringify(obj) {
-	let cache = [];
-	let str = JSON.stringify(obj, function (key, value) {
-		if (typeof value === "object" && value !== null) {
-			if (cache.indexOf(value) !== -1) {
-				// Circular reference found, discard key
-				return;
-			}
-			// Store value in our collection
-			cache.push(value);
-		}
-		return value;
-	});
-	cache = null; // reset the cache
-	return str;
-}
 function sleep(ms) {
 	var start = new Date().getTime(), expire = start + ms;
 	while (new Date().getTime() < expire) { }
@@ -101,7 +85,7 @@ main = () => {
 				item[0].takeItem(true)
 				handu = item
 				while (handu !== null) {
-					sleep(100)
+					// sleep(100)
 					inv.dropItemToInventory(handu[2])
 					const small = mappedItems.filter(item => (item[1].x == handu[2].x && item[1].y == handu[2].y && item != handu));
 					handu[1] = handu[2]
