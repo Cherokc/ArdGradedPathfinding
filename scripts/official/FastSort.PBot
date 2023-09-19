@@ -1,0 +1,119 @@
+// Create stockpiles from the selected item in the area
+// Made by Purus Cor to demonstrate usage of PBot API
+// For more information about API, join Purus Pasta discord
+// To suggest features into API, suggest them in discord
+const ui = Java.type('haven.purus.pbot.PBotAPI').ui();
+const PBotUtils = Java.type('haven.purus.pbot.PBotUtils');
+const Coord = Java.type('haven.Coord');
+const PBotWindowApi = Java.type('haven.purus.pbot.PBotWindowAPI');
+const PBotGobAPI = Java.type('haven.purus.pbot.PBotGobAPI');
+
+javaListToArray = (javalist) => {
+	const ret = [];
+	for (let i = 0; i < javalist.size(); i++)
+		ret.push(javalist.get(i));
+	return ret;
+};
+function stringify(obj) {
+	let cache = [];
+	let str = JSON.stringify(obj, function (key, value) {
+		if (typeof value === "object" && value !== null) {
+			if (cache.indexOf(value) !== -1) {
+				// Circular reference found, discard key
+				return;
+			}
+			// Store value in our collection
+			cache.push(value);
+		}
+		return value;
+	});
+	cache = null; // reset the cache
+	return str;
+}
+function sleep(ms) {
+	var start = new Date().getTime(), expire = start + ms;
+	while (new Date().getTime() < expire) { }
+	return;
+}
+main = () => {
+	let wnds = PBotWindowApi.getWindows(ui, "Cupboard")
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Woodbox")]
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Chest")]
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Crate")]
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Basket")]
+	wnds.forEach(window => {
+		const invs = PBotWindowApi.getInventories(window);
+		invs.forEach(inv => {
+			// inv.inv.stack()
+			const invX = inv.inv.isz.x;
+			const invY = inv.inv.isz.y;
+			let inv_grid = Array(invX).fill(false);
+			for (let i = 0; i < invX; i++) {
+				inv_grid[i] = Array(invY).fill(false);
+			}
+			;
+			let items = inv.getInventoryContents();
+			items.forEach(item => {
+				let size = item.gitem.size()
+				let loc = item.coord();
+				if (size.x !== 1 || size.y !== 1) {
+					for (let x = 0; x < size.x; x++) {
+						for (let y = 0; y < size.y; y++) {
+							inv_grid[loc.x + x][loc.y + y] = true;
+						}
+					}
+				}
+			});
+			let toSort = [];
+			items.forEach(item => {
+				let size = item.gitem.size()
+				if (size.x === 1 && size.y === 1) {
+					toSort.push(item);
+				}
+			});
+			toSort.sort((a, b) => (a.getName() > b.getName()) ? 1 : (a.getName() === b.getName()) ? ((a.getQuality() > b.getQuality()) ? 1 : -1) : -1)
+
+			const mappedItems = toSort.map(item => [item, item.coord()]);
+
+			let cur_x = -1
+			let cur_y = 0
+			// [0] item
+			// [1] cords x y
+			// [2] cords x y
+			mappedItems.forEach(item => {
+				while (true) {
+					cur_x += 1
+					if (cur_x == invX) {
+						cur_x = 0
+						cur_y += 1
+					}
+					if (inv_grid[cur_x][cur_y] === false) {
+						item.push(new Coord(cur_x, cur_y))
+						break;
+					}
+				}
+			});
+			let handu = null;
+			mappedItems.forEach(item => {
+				if (item[1].x == item[2].x && item[1].y == item[2].y) {
+					return;
+				}
+				item[0].takeItem(true)
+				handu = item
+				while (handu !== null) {
+					sleep(100)
+					inv.dropItemToInventory(handu[2])
+					const small = mappedItems.filter(item => (item[1].x == handu[2].x && item[1].y == handu[2].y && item != handu));
+					handu[1] = handu[2]
+					if (small.length == 1) {
+						handu = small[0];
+					} else {
+						handu = null;
+					}
+				}
+			});
+		});
+	});
+}
+
+main();

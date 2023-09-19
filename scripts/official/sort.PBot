@@ -1,0 +1,49 @@
+// Create stockpiles from the selected item in the area
+// Made by Purus Cor to demonstrate usage of PBot API
+// For more information about API, join Purus Pasta discord
+// To suggest features into API, suggest them in discord
+const ui = Java.type('haven.purus.pbot.PBotAPI').ui();
+const PBotUtils = Java.type('haven.purus.pbot.PBotUtils');
+const PBotWindowApi = Java.type('haven.purus.pbot.PBotWindowAPI');
+const PBotGobAPI = Java.type('haven.purus.pbot.PBotGobAPI');
+
+javaListToArray = (javalist) => {
+	const ret = [];
+	for (let i = 0; i < javalist.size(); i++)
+		ret.push(javalist.get(i));
+	return ret;
+};
+function stringify(obj) {
+	let cache = [];
+	let str = JSON.stringify(obj, function (key, value) {
+		if (typeof value === "object" && value !== null) {
+			if (cache.indexOf(value) !== -1) {
+				// Circular reference found, discard key
+				return;
+			}
+			// Store value in our collection
+			cache.push(value);
+		}
+		return value;
+	});
+	cache = null; // reset the cache
+	return str;
+}
+
+main = () => {
+	PBotUtils.sysMsg(ui, "Click inventory");
+	let wnds = PBotWindowApi.getWindows(ui, "Cupboard")
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Woodbox")]
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Chest")]
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Crate")]
+	wnds = [...wnds, ...PBotWindowApi.getWindows(ui, "Basket")]
+	wnds.forEach(window => {
+		const invs = PBotWindowApi.getInventories(window);
+		invs.forEach(inv => {
+			inv.inv.stack()
+			inv.inv.sort("")
+		});
+	});
+}
+
+main();
