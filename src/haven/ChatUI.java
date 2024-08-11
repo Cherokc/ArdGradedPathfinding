@@ -64,6 +64,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static haven.MCache.tilesz;
+import java.io.File;
+import java.io.IOException;
+import java.io.FileWriter;
 
 public class ChatUI extends Widget {
     private static final Resource alarmsfx = Resource.local().loadwait("sfx/Ding");
@@ -1670,6 +1673,12 @@ public class ChatUI extends Widget {
         }
         if (Config.chatsounds)
             Audio.play(notifsfx);
+
+        try (FileWriter writer = new FileWriter("message.txt")) {
+            writer.write(msg.text().text);
+        } catch (IOException e) {
+            System.err.println("Error writing to file: " + e.getMessage());
+        }
     }
 
     private class Spring extends NormAnim {

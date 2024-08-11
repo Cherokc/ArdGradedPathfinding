@@ -5,6 +5,10 @@ from __pbot.PBotSession import PBotSession
 from __pbot.PBotInventory import get_inventory_for_item
 
 class Script:
+    def __init__(self, scriptid, gateway):
+        self.scriptid = scriptid
+        self.gateway = gateway
+
     def cb(self, itm: PBotItem):
         inv = get_inventory_for_item(itm)
         if inv is not None:

@@ -34,3 +34,6 @@ class Vars:
 
     def pbotwindowapi(self):
         return self.gw.jvm.haven.purus.pbot.PBotWindowAPI
+    
+    def coord(self):
+        return self.gw.jvm.haven.Coord

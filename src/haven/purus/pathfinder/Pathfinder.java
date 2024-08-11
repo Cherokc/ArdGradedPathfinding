@@ -1,9 +1,15 @@
 package haven.purus.pathfinder;
 
+import haven.Composite;
+import haven.Drawable;
+import haven.ResData;
+import haven.Gob;
 import haven.Coord;
 import haven.Coord2d;
 import haven.GameUI;
 import haven.Gob;
+import haven.sloth.gob.Holding;
+import haven.sloth.gob.HeldBy;
 import static haven.MCache.cmaps;
 import static haven.MCache.tilesz;
 import static haven.MCache.tilesz2;
@@ -28,6 +34,9 @@ import java.util.Random;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.io.BufferedWriter;
+import java.io.BufferedReader;
+import java.io.FileWriter;
 
 public class Pathfinder extends Thread {
 
@@ -57,6 +66,18 @@ public class Pathfinder extends Thread {
         this.action = action;
     }
 
+    public boolean onBoat()
+    {
+        Gob player = gui.map.player();
+
+        final HeldBy heldby = player.getattr(HeldBy.class);
+        if (heldby != null) {
+            if (heldby.holder.resname().get().equals("gfx/terobjs/vehicle/dugout") || heldby.holder.resname().get().equals("gfx/terobjs/vehicle/rowboat"))
+                return true;
+        }
+        return false;
+    }
+
     public static Line segmentToLine(Coord2d a, Coord2d b) {
         if (a.y == b.y) { // Horizontal
             if (a.x == b.x)
@@ -81,6 +102,15 @@ public class Pathfinder extends Thread {
         add("gfx/tiles/odeeper");
         add("gfx/tiles/cave");
         add("gfx/tiles/rocks/.*");
+    }};
+
+    Set<String> accessibleTilesWhileInBoat = new HashSet<String>() {{
+        add("gfx/tiles/water");
+        add("gfx/tiles/deep");
+        add("gfx/tiles/fen");
+        add("gfx/tiles/fenwater");
+        add("gfx/tiles/swamp");
+        add("gfx/tiles/swampwater");
     }};
 
     Set<String> whitelistedGobs = new HashSet<>();
@@ -109,8 +139,8 @@ public class Pathfinder extends Thread {
         if (coordToTile(gui.map.player().rc.sub(origin)).equals(tile))
             return (true);
         clickTile(tile, origin);
-        for (int i = 0, sleep = 25; (gui.map.player().isMoving() || !coordToTile(gui.map.player().rc.sub(origin)).equals(tile)) && !stop; ) { // For now lets assume that player starts from different tile so we only have to check that he has moved to correct tile and is not walking anymore
-            if (!gui.map.player().isMoving()) {
+        for (int i = 0, sleep = 25; (gui.map.player().getv() > 0 || !coordToTile(gui.map.player().rc.sub(origin)).equals(tile)) && !stop; ) { // For now lets assume that player starts from different tile so we only have to check that he has moved to correct tile and is not walking anymore
+            if (!(gui.map.player().getv() > 0)) {
                 if (i > 1000) {
                     return (false);
                 } else {
@@ -150,12 +180,15 @@ public class Pathfinder extends Thread {
                 if (origin.y < originmap.y) origin.y += tilesz.y;
 
                 Predicate<String> inaccess = s -> {
-                    for (String act : inaccessibleTiles) {
+                    Set<String> tiles = (onBoat()) ? accessibleTilesWhileInBoat : inaccessibleTiles;
+                    for (String act : tiles) {
                         Pattern pattern = Pattern.compile(act);
-                        if (pattern.matcher(s).matches())
-                            return (true);
+                        if (pattern.matcher(s).matches()){
+                            return (!onBoat());
+                        }
+
                     }
-                    return (false);
+                    return (onBoat());
                 };
 
                 for (int i = 0; i < accessMatrix.length; i++) {
@@ -197,6 +230,11 @@ public class Pathfinder extends Thread {
                 for (Gob gob : gui.ui.sess.glob.oc.getallgobs()) {
                     if (gob.isplayer())
                         continue;
+                    Holding holding = gob.getattr(Holding.class);
+                    if (holding != null) {
+                        if(holding.held.id == gui.map.player().id)
+                            continue;
+                    }
                     Hitbox[] box = Hitbox.hbfor(gob);
                     if (box == null) continue;
                     for (Hitbox hitbox : box) {

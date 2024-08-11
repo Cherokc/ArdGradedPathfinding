@@ -1,6 +1,9 @@
 from __pbot.PBotSession import PBotSession
 
 class Script:
+    def __init__(self, scriptid, gateway):
+        self.scriptid = scriptid
+        self.gateway = gateway
     def run(self, sess: PBotSession):
         closestHerb = sess.PBotGobAPI.get_closest_gob_by_resname("gfx/terobjs/herbs/.*|gfx/kritter/jellyfish/jellyfish")
         if closestHerb == None or closestHerb.dist(sess.PBotGobAPI.get_player()) > 8*11:

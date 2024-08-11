@@ -5,6 +5,10 @@ from __pbot.PBotWindow import PBotWindow
 from __pbot.PBotInventory import PBotInventory
 
 class Script:
+    def __init__(self, scriptid, gateway):
+        self.scriptid = scriptid
+        self.gateway = gateway
+        
     def getWInv(self, wnd: PBotWindow) -> Optional[PBotInventory]:
         if wnd != None:
             inv = wnd.get_inventories()
